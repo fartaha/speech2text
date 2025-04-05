@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech to Text Web App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+
+        #output {
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 100%;
+            height: 150px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            background-color: #fff;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #copyButton {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #startButton {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        #stopButton {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #languageSelect {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Speech to Text Web App</h1>
+
+    <label for="languageSelect">Select Language: </label>
+    <select id="languageSelect">
+        <option value="en-US">English (US)</option>
+        <option value="en-GB">English (UK)</option>
+        <option value="es-ES">Spanish (Spain)</option>
+        <option value="fr-FR">French</option>
+        <option value="de-DE">German</option>
+        <option value="ja-JP">Japanese</option>
+        <option value="zh-CN">Chinese (Mandarin)</option>
+        <option value="fi-FI">Finnish</option>
+        <option value="fa-IR">Persian</option>
+        <!-- Add more as needed -->
+    </select>
+
+    <br>
+
+    <button id="startButton">Start Transcribing</button>
+    <button id="stopButton" class="hidden">Stop Transcribing</button>
+    <button id="copyButton" class="hidden">Copy Text</button>
+
+    <div id="output"></div>
+
+    <script>
+        // Check if the browser supports the Web Speech API
+        const isSpeechRecognitionSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+
+        if (!isSpeechRecognitionSupported) {
+            alert("Speech Recognition is not supported in your browser.");
+        }
+
+        let recognition;
+        let isTranscribing = false;
+
+        // Create new SpeechRecognition object based on the browser support
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+        } else if ('SpeechRecognition' in window) {
+            recognition = new SpeechRecognition();
+        }
+
+        // Configuration for speech recognition
+        recognition.continuous = true; // Keep transcribing continuously
+        recognition.interimResults = true; // Show partial results while speaking
+
+        const outputDiv = document.getElementById('output');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const copyButton = document.getElementById('copyButton');
+        const languageSelect = document.getElementById('languageSelect');
+
+        // When speech is recognized
+        recognition.onresult = function(event) {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+
+            outputDiv.textContent = transcript;
+        };
+
+        // Handle errors
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error', event.error);
+        };
+
+        // When speech recognition starts
+        recognition.onstart = function() {
+            isTranscribing = true;
+            startButton.classList.add('hidden');
+            stopButton.classList.remove('hidden');
+            copyButton.classList.remove('hidden');
+        };
+
+        // When speech recognition ends
+        recognition.onend = function() {
+            isTranscribing = false;
+            startButton.classList.remove('hidden');
+            stopButton.classList.add('hidden');
+        };
+
+        // Start transcription
+        startButton.addEventListener('click', function() {
+            const selectedLang = languageSelect.value;
+            recognition.lang = selectedLang;
+            recognition.start();
+        });
+
+        // Stop transcription
+        stopButton.addEventListener('click', function() {
+            recognition.stop();
+        });
+
+        // Copy the transcribed text to clipboard
+        copyButton.addEventListener('click', function() {
+            navigator.clipboard.writeText(outputDiv.textContent)
+                .then(function() {
+                    alert('Text copied to clipboard!');
+                })
+                .catch(function(err) {
+                    console.error('Error copying text: ', err);
+                });
+        });
+    </script>
+</body>
+</html>
